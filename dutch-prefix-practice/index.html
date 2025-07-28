@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mee or Aan? Placement Practice</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .game-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .exercise {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .sentence {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        .choices {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .choice-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .hidden {
+            display: none;
+        }
+        .progress {
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+        .explanation {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .next-btn {
+            background-color: #27ae60;
+            margin-top: 15px;
+        }
+        .next-btn:hover {
+            background-color: #219653;
+        }
+        .results {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .restart-btn {
+            background-color: #e74c3c;
+            margin-top: 20px;
+        }
+        .restart-btn:hover {
+            background-color: #c0392b;
+        }
+        .instructions {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mee or Aan? Placement Practice</h1>
+    
+    <div class="game-container">
+        <div class="instructions">
+            <h2>How to Play</h2>
+            <p>This game helps you practice using the Dutch prefixes "mee" and "aan" correctly in sentences.</p>
+            <p><strong>For each sentence:</strong></p>
+            <ol>
+                <li>Choose either "mee" or "aan" from the first dropdown.</li>
+                <li>Decide if the prefix should be attached to the verb or placed at the end of the sentence.</li>
+                <li>Click "Check Answer" to see if you're correct.</li>
+            </ol>
+            <p>The game will provide feedback and explanations to help you learn!</p>
+        </div>
+
+        <div class="progress">
+            Exercise <span id="current-question">1</span> of <span id="total-questions">0</span>
+        </div>
+
+        <div id="exercise-container" class="exercise">
+            <div class="sentence" id="sentence-display">
+                <!-- Sentence will be displayed here -->
+            </div>
+            
+            <div class="choices">
+                <div class="choice-group">
+                    <label for="prefix-choice">Choose prefix:</label>
+                    <select id="prefix-choice">
+                        <option value="">-- Select --</option>
+                        <option value="mee">mee</option>
+                        <option value="aan">aan</option>
+                    </select>
+                </div>
+                
+                <div class="choice-group">
+                    <label for="position-choice">Choose position:</label>
+                    <select id="position-choice">
+                        <option value="">-- Select --</option>
+                        <option value="attached">Attached to verb</option>
+                        <option value="end">At the end of sentence</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button id="check-btn">Check Answer</button>
+            
+            <div id="feedback" class="feedback hidden">
+                <!-- Feedback will be displayed here -->
+            </div>
+            
+            <button id="next-btn" class="next-btn hidden">Next Exercise</button>
+        </div>
+        
+        <div id="results" class="results hidden">
+            <h2>Game Complete!</h2>
+            <p>You scored <span id="score">0</span> out of <span id="total-score">0</span>.</p>
+            <button id="restart-btn" class="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game data - exercises
+        const exercises = [
+            {
+                sentence: "Ik ___ (doen) aan de vergadering.",
+                verb: "doen",
+                correctPrefix: "mee",
+                correctPosition: "end",
+                explanation: "In present tense, 'meedoen' splits, and 'mee' goes to the end: 'Ik doe mee aan de vergadering.'"
+            },
+            {
+                sentence: "Hij wil de radio ___ (zetten).",
+                verb: "zetten",
+                correctPrefix: "aan",
+                correctPosition: "attached",
+                explanation: "With modal verbs like 'wil', the infinitive 'aanzetten' keeps 'aan' attached: 'Hij wil de radio aanzetten.'"
+            },
+            {
+                sentence: "Zij ___ (nemen) het boek naar school.",
+                verb: "nemen",
+                correctPrefix: "mee",
+                correctPosition: "end",
+                explanation: "In present tense, 'meenemen' splits, and 'mee' goes to the end: 'Zij neemt het boek mee naar school.'"
+            },
+            {
+                sentence: "We hebben de computer ___ (sluiten).",
+                verb: "sluiten",
+                correctPrefix: "aan",
+                correctPosition: "attached",
+                explanation: "In perfect tense with 'hebben', 'aan' stays attached to form 'aangesloten': 'We hebben de computer aangesloten.'"
+            },
+            {
+                sentence: "Jullie ___ (luisteren) naar de muziek.",
+                verb: "luisteren",
+                correctPrefix: "mee",
+                correctPosition: "end",
+                explanation: "In present tense, 'meeluisteren' splits, and 'mee' goes to the end: 'Jullie luisteren mee naar de muziek.'"
+            },
+            {
+                sentence: "De lerares kan niet ___ (horen) wat je zegt.",
+                verb: "horen",
+                correctPrefix: "aan",
+                correctPosition: "attached",
+                explanation: "With modal verbs like 'kan', the infinitive 'aanhoren' keeps 'aan' attached: 'De lerares kan niet aanhoren wat je zegt.'"
+            },
+            {
+                sentence: "Wij ___ (passen) onze kleding.",
+                verb: "passen",
+                correctPrefix: "aan",
+                correctPosition: "end",
+                explanation: "In present tense, 'aanpassen' splits, and 'aan' goes to the end: 'Wij passen onze kleding aan.'"
+            },
+            {
+                sentence: "Ze heeft ___ (reizen) naar Amsterdam.",
+                verb: "reizen",
+                correctPrefix: "mee",
+                correctPosition: "attached",
+                explanation: "In perfect tense with 'heeft', 'mee' stays attached to form 'meegereisd': 'Ze heeft meegereisd naar Amsterdam.'"
+            },
+            {
+                sentence: "Ik zal ___ (vragen) of hij komt.",
+                verb: "vragen",
+                correctPrefix: "aan",
+                correctPosition: "attached",
+                explanation: "With auxiliary verbs like 'zal', the infinitive 'aanvragen' keeps 'aan' attached: 'Ik zal aanvragen of hij komt.'"
+            },
+            {
+                sentence: "Zij ___ (maken) de lamp.",
+                verb: "maken",
+                correctPrefix: "aan",
+                correctPosition: "end",
+                explanation: "In present tense, 'aanmaken' splits, and 'aan' goes to the end: 'Zij maakt de lamp aan.'"
+            }
+        ];
+
+        // Game state
+        let currentExerciseIndex = 0;
+        let score = 0;
+        let totalQuestions = exercises.length;
+
+        // DOM elements
+        const sentenceDisplay = document.getElementById('sentence-display');
+        const prefixChoice = document.getElementById('prefix-choice');
+        const positionChoice = document.getElementById('position-choice');
+        const checkBtn = document.getElementById('check-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedback = document.getElementById('feedback');
+        const results = document.getElementById('results');
+        const exerciseContainer = document.getElementById('exercise-container');
+        const currentQuestionSpan = document.getElementById('current-question');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const scoreSpan = document.getElementById('score');
+        const totalScoreSpan = document.getElementById('total-score');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // Initialize the game
+        function initGame() {
+            currentExerciseIndex = 0;
+            score = 0;
+            totalQuestionsSpan.textContent = totalQuestions;
+            loadExercise(currentExerciseIndex);
+            exerciseContainer.classList.remove('hidden');
+            results.classList.add('hidden');
+        }
+
+        // Load an exercise
+        function loadExercise(index) {
+            const exercise = exercises[index];
+            sentenceDisplay.textContent = exercise.sentence;
+            prefixChoice.value = '';
+            positionChoice.value = '';
+            feedback.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            currentQuestionSpan.textContent = index + 1;
+        }
+
+        // Check the answer
+        function checkAnswer() {
+            const exercise = exercises[currentExerciseIndex];
+            const selectedPrefix = prefixChoice.value;
+            const selectedPosition = positionChoice.value;
+            
+            if (!selectedPrefix || !selectedPosition) {
+                feedback.textContent = "Please make both selections before checking.";
+                feedback.className = "feedback incorrect";
+                feedback.classList.remove('hidden');
+                return;
+            }
+            
+            const isCorrect = selectedPrefix === exercise.correctPrefix && 
+                              selectedPosition === exercise.correctPosition;
+            
+            if (isCorrect) {
+                score++;
+                feedback.innerHTML = `<strong>Correct!</strong> ${exercise.explanation}`;
+                feedback.className = "feedback correct";
+                nextBtn.classList.remove('hidden');
+                checkBtn.disabled = true;
+            } else {
+                let hint = `<strong>Wrong. Try again!</strong> Hint: `;
+                
+                if (selectedPrefix !== exercise.correctPrefix) {
+                    hint += `The correct prefix is "${exercise.correctPrefix}" instead of "${selectedPrefix}". `;
+                }
+                
+                if (selectedPosition !== exercise.correctPosition) {
+                    hint += `The prefix should be ${exercise.correctPosition === 'attached' ? 'attached to the verb' : 'at the end of the sentence'}. `;
+                }
+                
+                hint += exercise.explanation;
+                feedback.innerHTML = hint;
+                feedback.className = "feedback incorrect";
+            }
+            
+            feedback.classList.remove('hidden');
+        }
+
+        // Move to the next exercise
+        function nextExercise() {
+            currentExerciseIndex++;
+            checkBtn.disabled = false;
+            
+            if (currentExerciseIndex < exercises.length) {
+                loadExercise(currentExerciseIndex);
+            } else {
+                showResults();
+            }
+        }
+
+        // Show the final results
+        function showResults() {
+            exerciseContainer.classList.add('hidden');
+            results.classList.remove('hidden');
+            scoreSpan.textContent = score;
+            totalScoreSpan.textContent = totalQuestions;
+        }
+
+        // Event listeners
+        checkBtn.addEventListener('click', checkAnswer);
+        nextBtn.addEventListener('click', nextExercise);
+        restartBtn.addEventListener('click', initGame);
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html> 

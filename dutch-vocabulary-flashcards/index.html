@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dutch Learning Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .word {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .example {
+            font-size: 16px;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .incorrect {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .next {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e8eaf6;
+            border-radius: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .speaker-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #2196F3;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .speaker-icon:hover {
+            background-color: rgba(33, 150, 243, 0.1);
+        }
+
+        @keyframes speak {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .speaking {
+            animation: speak 1s infinite;
+        }
+
+        .category-selector {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .category-selector select {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            background-color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .answer-form {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .answer-input {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            width: 70%;
+            max-width: 300px;
+        }
+
+        .submit-btn {
+            background-color: #2196F3;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .feedback.correct {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #2e7d32;
+        }
+
+        .feedback.incorrect {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #c62828;
+        }
+
+        .countdown-bar {
+            height: 4px;
+            background-color: #FF9800;
+            width: 100%;
+            margin-top: 10px;
+            transform-origin: left;
+            animation: countdown 2.5s linear forwards;
+        }
+
+        @keyframes countdown {
+            0% { transform: scaleX(1); }
+            100% { transform: scaleX(0); }
+        }
+
+        .mode-toggle {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .toggle-btn {
+            background-color: #9e9e9e;
+            color: white;
+            margin: 0 5px;
+        }
+
+        .toggle-btn.active {
+            background-color: #2196F3;
+        }
+
+        .difficulty.easy { background-color: #4CAF50; color: white; }
+        .difficulty.good { background-color: #2196F3; color: white; }
+        .difficulty.hard { background-color: #FF9800; color: white; }
+        .srs-info { margin-top: 10px; font-size: 14px; }
+        
+        /* Popup styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .popup-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .popup-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .popup-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s;
+        }
+        
+        .popup-close:hover {
+            color: #f44336;
+        }
+        
+        .popup-title {
+            margin-top: 0;
+            color: #2196F3;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .popup-section {
+            margin-bottom: 20px;
+        }
+        
+        .popup-section h3 {
+            color: #4CAF50;
+            margin-bottom: 8px;
+        }
+        
+        .help-icon {
+            cursor: pointer;
+            margin-left: 8px;
+            background-color: #2196F3;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        /* Mode selector dropdown styles */
+        .mode-selector {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .mode-selector select {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            background-color: white;
+            min-width: 200px;
+        }
+        
+        /* Add a new selector container for the row */
+        .selectors-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        /* Update category and mode selectors to work in the flex container */
+        .category-selector, .mode-selector {
+            margin: 0;
+            flex: 1;
+        }
+        
+        .category-selector {
+            text-align: right;
+            padding-left: 10px;
+        }
+        
+        .mode-selector {
+            text-align: left;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center;">Dutch Learning Game</h1>
+        
+        <div class="stats">
+            <span>Correct: <span id="correct">0</span></span> |
+            <span>Incorrect: <span id="incorrect">0</span></span> |
+            <span>Words Learned: <span id="learned">0</span></span>
+        </div>
+
+        <div class="selectors-container">
+            <div class="mode-selector">
+                <select id="modeSelect">
+                    <option value="srs">Smart Review Mode</option>
+                    <option value="practice">Practice Mode</option>
+                    <option value="test">Game Mode</option>
+                </select>
+                <span class="help-icon" id="helpIcon">?</span>
+            </div>
+            
+            <div class="category-selector">
+                <select id="categorySelect">
+                    <option value="all">All Categories</option>
+                    <!-- Categories will be populated from vocabulary data -->
+                </select>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Loading vocabulary...</div>
+
+        <div class="card hidden" id="flashcard">
+            <button class="speaker-icon" id="speakButton" title="Listen to pronunciation">🔊</button>
+            <div class="word" id="word"></div>
+            <div class="example hidden" id="example"></div>
+        </div>
+
+        <div id="answerForm" class="answer-form hidden">
+            <input type="text" id="answerInput" class="answer-input" placeholder="Type English translation here" autocomplete="off">
+            <button id="submitAnswer" class="submit-btn">Submit</button>
+            <div id="feedback" class="feedback hidden"></div>
+        </div>
+
+        <div class="controls hidden" id="practiceControls">
+            <button class="correct" onclick="checkAnswer(true)">I Know This</button>
+            <button class="incorrect" onclick="checkAnswer(false)">Still Learning</button>
+        </div>
+
+        <div class="controls hidden" id="testControls">
+            <button class="next" onclick="skipWord()">Skip Word</button>
+            <button class="incorrect" onclick="keepLearningWord()">Keep Learning</button>
+        </div>
+    </div>
+
+    <!-- Smart Review Mode Guide Popup -->
+    <div class="popup-overlay" id="guidePopup">
+        <div class="popup-content">
+            <span class="popup-close" id="closePopup">&times;</span>
+            <h2 class="popup-title">Smart Review Mode Guide</h2>
+            
+            <div class="popup-section">
+                <h3>What is Smart Review Mode?</h3>
+                <p>Smart Review Mode uses a spaced repetition system (SRS) to help you learn Dutch vocabulary efficiently. It schedules words for review at optimal intervals based on how well you know them, helping you remember words long-term with minimal effort.</p>
+            </div>
+            
+            <div class="popup-section">
+                <h3>How to Use Smart Review Mode</h3>
+                <ol>
+                    <li><strong>Review Due Words:</strong> Words that are due for review will be presented to you automatically.</li>
+                    <li><strong>Type the English Translation:</strong> When shown a Dutch word, type its English translation in the input field.</li>
+                    <li><strong>Check Your Answer:</strong> Click "Submit" or press Enter to check your answer.</li>
+                    <li><strong>See Your Progress:</strong> The system will track how many words you've learned and when they'll next appear for review.</li>
+                    <li><strong>Practice Upcoming Words:</strong> Use the purple "Practice Upcoming Words" button to review words that aren't yet due.</li>
+                    <li><strong>Keep Learning:</strong> Use the "Keep Learning" button for words you find difficult and want to review again soon.</li>
+                </ol>
+            </div>
+            
+            <div class="popup-section">
+                <h3>How It Works</h3>
+                <p>The Smart Review system uses an algorithm that determines when you should review each word:</p>
+                <ul>
+                    <li><strong>Easy Words:</strong> If you consistently remember a word, the interval between reviews increases (1 day → 6 days → 15 days → etc.).</li>
+                    <li><strong>Difficult Words:</strong> Words you find challenging will appear more frequently until you master them.</li>
+                    <li><strong>Optimal Learning:</strong> The system focuses your time on words you're at risk of forgetting, rather than words you already know well.</li>
+                </ul>
+                <p>This approach is scientifically proven to be more effective than traditional flashcards for long-term retention.</p>
+            </div>
+            
+            <div class="popup-section">
+                <h3>Tips for Success</h3>
+                <ul>
+                    <li>Review daily to maintain your progress and keep up with due words.</li>
+                    <li>Use the "Keep Learning" button for words you want to see again soon.</li>
+                    <li>Listen to the pronunciation by clicking the speaker icon.</li>
+                    <li>Pay attention to the example sentences to understand context.</li>
+                </ul>
+            </div>
+            
+            <div class="popup-section">
+                <h3>Button Functions</h3>
+                <ul>
+                    <li><strong>Skip Word:</strong> Moves to the next word without affecting your progress or the word's review schedule. Use this when you want to come back to a word later.</li>
+                    <li><strong>Keep Learning:</strong> Marks the current word as difficult, shows you the answer, and schedules it for review soon. Use this for words you're still learning or having trouble remembering.</li>
+                    <li><strong>Reset Progress:</strong> Completely resets all your learning data, including word progress, statistics, and review schedules. This cannot be undone, so use it only when you want to start fresh.</li>
+                </ul>
+            </div>
+            
+            <button id="startLearning" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; display: block; margin: 20px auto 0;">Start Learning</button>
+        </div>
+    </div>
+
+    <script>
+        // Embedded vocabulary data
+        let vocabulary = {
+          "Basic Actions & Verbs": [
+            { dutch: "denk", english: "think/consider/reflect", example: "Ik denk aan jou.", exampleTranslation: "I think of you." },
+            { dutch: "weet", english: "know/am aware", example: "Ik weet het niet.", exampleTranslation: "I don't know." },
+            { dutch: "weten", english: "know/be aware/understand", example: "Zij weten het antwoord.", exampleTranslation: "They know the answer." },
+            { dutch: "verteld", english: "told/narrated/related", example: "Hij heeft mij een verhaal verteld.", exampleTranslation: "He told me a story." },
+            { dutch: "vertel", english: "tell/narrate/relate", example: "Vertel me wat er gebeurd is.", exampleTranslation: "Tell me what happened." },
+            { dutch: "doen mee", english: "participate/join in/take part", example: "Wij doen mee aan de wedstrijd.", exampleTranslation: "We participate in the competition." },
+            { dutch: "meedoen", english: "participate/join in/take part/get involved", example: "Wil je meedoen met het spel?", exampleTranslation: "Do you want to join the game?" },
+            { dutch: "gebruiken", english: "use/operate/utilize/employ", example: "Ik gebruiken deze pen.", exampleTranslation: "I use this pen." },
+            { dutch: "gebruikmaken", english: "use/utilize/make use of/take advantage of", example: "Je kunt gebruikmaken van onze faciliteiten.", exampleTranslation: "You can use our facilities." },
+            { dutch: "worden", english: "be/become/get/turn", example: "Het wordt koud buiten.", exampleTranslation: "It is getting cold outside." },
+            { dutch: "word", english: "be/become/get/turn", example: "Ik word dokter.", exampleTranslation: "I am becoming a doctor." },
+            { dutch: "kiezen", english: "choose/select/pick/opt for", example: "Je moet een kleur kiezen.", exampleTranslation: "You must choose a color." },
+            { dutch: "vergeten", english: "forget/overlook/neglect", example: "Ik vergeet nooit je verjaardag.", exampleTranslation: "I never forget your birthday." },
+            { dutch: "onthoudt", english: "remember/memorize/retain", example: "Onthoudt dit telefoonnummer.", exampleTranslation: "Remember this phone number." },
+            { dutch: "neem", english: "take/grab/pick up", example: "Neem je tijd.", exampleTranslation: "Take your time." },
+            { dutch: "zoek uit", english: "find out/figure out/investigate/determine", example: "Zoek uit wanneer de trein vertrekt.", exampleTranslation: "Find out when the train leaves." },
+            { dutch: "sluiten", english: "close/shut/lock/conclude", example: "We sluiten om 18:00 uur.", exampleTranslation: "We close at 6:00 PM." },
+            { dutch: "bieden", english: "offer/provide/bid/extend", example: "Wij bieden hulp aan.", exampleTranslation: "We offer help." },
+            { dutch: "krijgen", english: "get/receive/obtain/acquire", example: "Ik krijg een cadeau.", exampleTranslation: "I receive a gift." },
+            { dutch: "roep", english: "call/shout/yell/summon", example: "Ik roep je naam.", exampleTranslation: "I call your name." },
+            { dutch: "uitnodigen", english: "invite/ask/welcome", example: "Ik wil je uitnodigen voor mijn feest.", exampleTranslation: "I want to invite you to my party." },
+            { dutch: "weghalen", english: "remove/take away/get rid of", example: "Kun je dit weghalen?", exampleTranslation: "Can you remove this?" },
+            { dutch: "bezorgen", english: "deliver/bring/cause/provide", example: "We bezorgen het pakket morgen.", exampleTranslation: "We will deliver the package tomorrow." },
+            { dutch: "verzamelen", english: "collect/gather/assemble/accumulate", example: "Ik verzamel postzegels.", exampleTranslation: "I collect stamps." },
+            { dutch: "bepalen", english: "define/determine/decide/establish", example: "Jij moet bepalen wat je wilt doen.", exampleTranslation: "You must determine what you want to do." },
+            { dutch: "meenemen", english: "bring/take with you/carry along", example: "Neem je camera mee.", exampleTranslation: "Take your camera with you." },
+            { dutch: "raden", english: "guess/estimate/advise/suggest", example: "Raad eens wie ik gezien heb?", exampleTranslation: "Guess who I saw?" },
+            { dutch: "aanmelden", english: "sign up/register/enroll/apply", example: "Je moet je aanmelden voor de cursus.", exampleTranslation: "You must sign up for the course." },
+            { dutch: "aanmeldt", english: "sign up/register/enroll/apply", example: "Hij aanmeldt zich voor de wedstrijd.", exampleTranslation: "He signs up for the competition." },
+            { dutch: "ophalen", english: "pick up/collect/retrieve/gather", example: "Ik kom je ophalen om 8 uur.", exampleTranslation: "I will pick you up at 8 o'clock." },
+            { dutch: "brengen", english: "bring/take/deliver/transport", example: "Ik breng het morgen terug.", exampleTranslation: "I will bring it back tomorrow." },
+            { dutch: "haal", english: "get/fetch/pick up/obtain", example: "Ik haal wat te drinken.", exampleTranslation: "I will get something to drink." },
+            { dutch: "sturen", english: "send/mail/direct/steer", example: "Ik stuur je een email.", exampleTranslation: "I will send you an email." },
+            { dutch: "doorgeven", english: "pass on/communicate/transmit/relay", example: "Kun je deze informatie doorgeven?", exampleTranslation: "Can you pass on this information?" },
+            { dutch: "aantrekken", english: "put on/wear/attract/draw", example: "Trek je jas aan.", exampleTranslation: "Put on your coat." },
+            { dutch: "opgeven", english: "sign up/register/give up/surrender", example: "Je moet je opgeven voor het toernooi.", exampleTranslation: "You must sign up for the tournament." },
+            { dutch: "gebeurd", english: "happened/occurred/taken place", example: "Wat is er gebeurd?", exampleTranslation: "What happened?" },
+            { dutch: "taak", english: "task/job/assignment/duty", example: "Ik moet deze taak vandaag afmaken.", exampleTranslation: "I need to finish this task today." },
+            { dutch: "blijven", english: "stay/remain/continue/keep", example: "Ik blijf thuis vandaag.", exampleTranslation: "I'm staying home today." },
+            { dutch: "volgen", english: "follow/pursue/track/attend", example: "Volg de instructies zorgvuldig.", exampleTranslation: "Follow the instructions carefully." },
+            { dutch: "past", english: "fits/suits/matches/is appropriate", example: "Deze sleutel past niet in het slot.", exampleTranslation: "This key doesn't fit in the lock." },
+            { dutch: "betekent", english: "means/signifies/implies/indicates", example: "Wat betekent dit woord?", exampleTranslation: "What does this word mean?" },
+            { dutch: "gebeurt", english: "happens/occurs/takes place", example: "Wat gebeurt er hier?", exampleTranslation: "What's happening here?" },
+            { dutch: "bestaat", english: "exists/consists of/is made up of", example: "Dit bedrijf bestaat al twintig jaar.", exampleTranslation: "This company has existed for twenty years." },
+            { dutch: "meld", english: "report/notify/announce/register", example: "Meld je bij de receptie.", exampleTranslation: "Report to the reception desk." },
+            { dutch: "overnemen", english: "take over/assume/adopt/acquire", example: "Hij zal mijn taken overnemen.", exampleTranslation: "He will take over my tasks." },
+            { dutch: "solliciteren", english: "apply/apply for a job/interview", example: "Ik ga solliciteren bij dat bedrijf.", exampleTranslation: "I'm going to apply for a job at that company." },
+            { dutch: "melden", english: "report/notify/announce/register", example: "Je moet je melden bij de receptie.", exampleTranslation: "You must report to the reception." },
+            { dutch: "bereiken", english: "reach/achieve/attain/contact", example: "Je kunt me bereiken op dit nummer.", exampleTranslation: "You can reach me at this number." },
+            { dutch: "nodigen", english: "invite/ask/welcome", example: "We nodigen je uit voor het feest.", exampleTranslation: "We invite you to the party." },
+            { dutch: "blijf", english: "stay/remain/continue", example: "Blijf rustig.", exampleTranslation: "Stay calm." },
+            { dutch: "oefenen", english: "practice/exercise/train/rehearse", example: "Je moet elke dag oefenen.", exampleTranslation: "You need to practice every day." },
+            { dutch: "afgemaakt", english: "finished/completed/concluded", example: "Ik heb mijn huiswerk afgemaakt.", exampleTranslation: "I have finished my homework." },
+            { dutch: "geslaagd", english: "succeeded/passed/managed", example: "Hij is geslaagd voor zijn examen.", exampleTranslation: "He passed his exam." },
+            { dutch: "vervangt", english: "replaces/substitutes/takes the place of", example: "Zij vervangt mij tijdens mijn vakantie.", exampleTranslation: "She replaces me during my vacation." },
+            { dutch: "houden", english: "hold/keep/maintain/retain", example: "Hou dit voor mij vast.", exampleTranslation: "Hold this for me." },
+            { dutch: "sparen", english: "save/save up/accumulate", example: "Ik spaar voor een nieuwe auto.", exampleTranslation: "I'm saving for a new car." },
+            { dutch: "dweilen", english: "mop/swab/clean the floor", example: "Ik moet de vloer dweilen.", exampleTranslation: "I need to mop the floor." },
+            { dutch: "zorgen", english: "care/take care of/worry/ensure", example: "Ik zal ervoor zorgen.", exampleTranslation: "I will take care of it." },
+            { dutch: "verhuizen", english: "move/relocate/change residence", example: "We gaan volgende maand verhuizen.", exampleTranslation: "We are moving next month." },
+            { dutch: "vertrekt", english: "departs/leaves/goes away", example: "De trein vertrekt over tien minuten.", exampleTranslation: "The train departs in ten minutes." },
+            { dutch: "ging", english: "went/did go", example: "Hij ging naar huis.", exampleTranslation: "He went home." },
+            { dutch: "reken", english: "count/calculate/compute", example: "Reken maar op mij.", exampleTranslation: "Count on me." },
+            { dutch: "verplaatst", english: "moved/relocated/transferred", example: "De vergadering is verplaatst naar morgen.", exampleTranslation: "The meeting has been moved to tomorrow." },
+            { dutch: "aangevraagd", english: "requested/applied for", example: "Ik heb een nieuw paspoort aangevraagd.", exampleTranslation: "I have applied for a new passport." },
+            { dutch: "ervoor", english: "for it/before it/in advance", example: "Ik zorg ervoor.", exampleTranslation: "I'll take care of it." },
+            { dutch: "stellen", english: "put/place/set/pose", example: "Ik wil je een vraag stellen.", exampleTranslation: "I want to ask you a question." },
+            { dutch: "praten", english: "talk/speak/chat/discuss", example: "We moeten praten over de toekomst.", exampleTranslation: "We need to talk about the future." },
+            { dutch: "veranderen", english: "change/alter/modify/transform", example: "Ik wil mijn leven veranderen.", exampleTranslation: "I want to change my life." },
+            { dutch: "inschrijven", english: "register/enroll/sign up", example: "Je moet je inschrijven voor de cursus.", exampleTranslation: "You must register for the course." },
+            { dutch: "doorgaan", english: "continue/proceed/go on/carry on", example: "De vergadering zal doorgaan ondanks het slechte weer.", exampleTranslation: "The meeting will proceed despite the bad weather." },
+            { dutch: "overslaan", english: "skip/miss/omit/pass over", example: "Ik ga het ontbijt overslaan.", exampleTranslation: "I'm going to skip breakfast." },
+            { dutch: "uitziet", english: "looks/appears/seems", example: "Het uitziet goed.", exampleTranslation: "It looks good." },
+            { dutch: "stofzuigen", english: "vacuum/hoover", example: "Ik moet de woonkamer stofzuigen.", exampleTranslation: "I need to vacuum the living room." },
+          ],
+          "Time & Frequency": [
+            { dutch: "even", english: "just/for a moment/briefly/a little while", example: "Wacht even.", exampleTranslation: "Wait a moment." },
+            { dutch: "weer", english: "again/once more/back/anew", example: "Ik zie je weer morgen.", exampleTranslation: "I will see you again tomorrow." },
+            { dutch: "jaarlijkse", english: "annual/yearly/once a year", example: "Dit is een jaarlijkse traditie.", exampleTranslation: "This is an annual tradition." },
+            { dutch: "ongeveer", english: "approximately/about/around/roughly", example: "Het duurt ongeveer een uur.", exampleTranslation: "It takes about an hour." },
+            { dutch: "ten minste", english: "at least/minimum/no less than", example: "Je moet ten minste 18 jaar zijn.", exampleTranslation: "You must be at least 18 years old." },
+            { dutch: "vaak", english: "often/frequently/regularly", example: "Ik ga vaak naar de bioscoop.", exampleTranslation: "I go to the cinema often." },
+            { dutch: "geregeld", english: "regularly/frequently/periodically", example: "We gaan geregeld uit eten.", exampleTranslation: "We go out for dinner regularly." },
+            { dutch: "uiterlijk", english: "at the latest/no later than/by", example: "Je moet uiterlijk morgen betalen.", exampleTranslation: "You must pay by tomorrow at the latest." },
+            { dutch: "tijdstip", english: "time/moment/point in time", example: "Op welk tijdstip begint de film?", exampleTranslation: "At what time does the movie start?" },
+            { dutch: "meteen", english: "immediately/right away/at once", example: "Kom meteen hier!", exampleTranslation: "Come here immediately!" },
+            { dutch: "voordat", english: "before/prior to/ahead of", example: "Bel me voordat je vertrekt.", exampleTranslation: "Call me before you leave." },
+            { dutch: "steeds", english: "constantly/continually/repeatedly/always", example: "Hij komt steeds te laat.", exampleTranslation: "He is constantly late." },
+            { dutch: "tijdens", english: "during/throughout/in the course of", example: "Tijdens de vergadering bleef hij stil.", exampleTranslation: "During the meeting he remained quiet." },
+            { dutch: "alvast", english: "in advance/already/beforehand", example: "Alvast bedankt voor je hulp.", exampleTranslation: "Thanks in advance for your help." },
+            { dutch: "bijna", english: "almost/nearly/just about", example: "Het is bijna tijd.", exampleTranslation: "It's almost time." },
+            { dutch: "vaker", english: "more often/more frequently", example: "Ik zou je vaker willen zien.", exampleTranslation: "I would like to see you more often." },
+            { dutch: "doordeweekse", english: "weekday/working day", example: "Ik werk alleen op doordeweekse dagen.", exampleTranslation: "I only work on weekdays." },
+            { dutch: "winkeltijden", english: "shop opening hours/store hours", example: "De winkeltijden zijn van 9 tot 18 uur.", exampleTranslation: "The store hours are from 9 to 6." },
+            { dutch: "tevoren", english: "beforehand/in advance/previously", example: "Je moet tevoren reserveren.", exampleTranslation: "You need to make a reservation in advance." },
+            { dutch: "te vroeg", english: "too early/prematurely", example: "Ik ben te vroeg voor de afspraak.", exampleTranslation: "I am too early for the appointment." },
+          ],
+          "People & Social": [
+            { dutch: "iedereen", english: "everybody/everyone/all", example: "Iedereen is welkom.", exampleTranslation: "Everybody is welcome." },
+            { dutch: "iemand", english: "someone/somebody/anyone/person", example: "Is er iemand thuis?", exampleTranslation: "Is someone home?" },
+            { dutch: "elkaar", english: "each other/one another/mutually", example: "We helpen elkaar.", exampleTranslation: "We help each other." },
+            { dutch: "bewoners", english: "residents/inhabitants/occupants/tenants", example: "De bewoners van dit gebouw zijn vriendelijk.", exampleTranslation: "The residents of this building are friendly." },
+            { dutch: "samen", english: "together/jointly/collectively", example: "We doen dit samen.", exampleTranslation: "We do this together." },
+            { dutch: "aan iemand", english: "to somebody/to someone/to a person", example: "Geef dit aan iemand door.", exampleTranslation: "Pass this on to somebody." },
+            { dutch: "buurjongen", english: "neighbor boy/boy next door", example: "De buurjongen helpt me met mijn huiswerk.", exampleTranslation: "The neighbor boy helps me with my homework." },
+            { dutch: "vrijwilligers", english: "volunteers/voluntary workers", example: "De vrijwilligers werken hard.", exampleTranslation: "The volunteers work hard." },
+            { dutch: "tandarts", english: "dentist", example: "Ik heb een afspraak bij de tandarts.", exampleTranslation: "I have an appointment with the dentist." },
+            { dutch: "leidinggevende", english: "manager/supervisor/boss/leader", example: "Mijn leidinggevende is erg streng.", exampleTranslation: "My supervisor is very strict." },
+            { dutch: "belangstellenden", english: "interested parties/interested people", example: "Alle belangstellenden zijn welkom.", exampleTranslation: "All interested parties are welcome." },
+            { dutch: "niemand", english: "nobody/no one/none", example: "Er is niemand thuis.", exampleTranslation: "There is nobody home." }
+          ],
+          "Quantities & Numbers": [
+            { dutch: "teveel", english: "too much/too many/excess/surplus", example: "Er zijn teveel mensen hier.", exampleTranslation: "There are too many people here." },
+            { dutch: "veel", english: "much/many/a lot/plenty", example: "Ik heb veel vrienden.", exampleTranslation: "I have many friends." },
+            { dutch: "weinig", english: "little/few/not much/scarcely", example: "Er is weinig tijd over.", exampleTranslation: "There is little time left." },
+            { dutch: "aantal", english: "number/amount/quantity/count", example: "Een aantal mensen kwam te laat.", exampleTranslation: "A number of people were late." },
+            { dutch: "bedrag", english: "amount/sum/figure/total", example: "Het totale bedrag is €50.", exampleTranslation: "The total amount is €50." },
+            { dutch: "leeftijden", english: "ages/age groups", example: "Deze activiteit is geschikt voor alle leeftijden.", exampleTranslation: "This activity is suitable for all ages." },
+          ],
+          "Location & Space": [
+            { dutch: "omgeving", english: "environment/surroundings/area/vicinity", example: "De omgeving is prachtig.", exampleTranslation: "The surroundings are beautiful." },
+            { dutch: "plek", english: "place/spot/location/site", example: "Dit is mijn favoriete plek.", exampleTranslation: "This is my favorite spot." },
+            { dutch: "rondom", english: "around/all around/surrounding/encompassing", example: "Er zijn bomen rondom het huis.", exampleTranslation: "There are trees around the house." },
+            { dutch: "verdieping", english: "floor/story/level", example: "Ik woon op de derde verdieping.", exampleTranslation: "I live on the third floor." },
+            { dutch: "begane grond", english: "first floor/ground floor/ground level", example: "De winkel is op de begane grond.", exampleTranslation: "The shop is on the first floor." },
+            { dutch: "veld", english: "field/pitch/domain/meadow", example: "De kinderen spelen op het veld.", exampleTranslation: "The children are playing on the field." },
+            { dutch: "hieronder", english: "below/following/hereunder/underneath", example: "De informatie staat hieronder.", exampleTranslation: "The information is below." },
+            { dutch: "hiervoor", english: "for this/for this reason/beforehand/previously", example: "Hiervoor moet je een formulier invullen.", exampleTranslation: "For this, you need to fill out a form." },
+            { dutch: "over", english: "about/over/on/concerning", example: "We praten over het weer.", exampleTranslation: "We talk about the weather." },
+            { dutch: "af", english: "off/finished/complete/done", example: "Het alarm gaat af.", exampleTranslation: "The alarm goes off." },
+            { dutch: "erbij", english: "there/with it/in addition/included", example: "Doe er wat zout erbij.", exampleTranslation: "Add some salt to it." },
+            { dutch: "buiten", english: "outside/outdoors/exterior", example: "De kinderen spelen buiten.", exampleTranslation: "The children are playing outside." },
+            { dutch: "boven", english: "above/upstairs/over/up", example: "De slaapkamer is boven.", exampleTranslation: "The bedroom is upstairs." },
+            { dutch: "beneden", english: "below/downstairs/down/underneath", example: "De keuken is beneden.", exampleTranslation: "The kitchen is downstairs." },
+            { dutch: "dicht", english: "close/near/shut/closed", example: "De winkel is dicht.", exampleTranslation: "The shop is closed." }
+          ],
+          "Communication & Interaction": [
+            { dutch: "bericht", english: "message/text/notification/report", example: "Ik heb een bericht ontvangen.", exampleTranslation: "I have received a message." },
+            { dutch: "sturen", english: "send/mail/direct/transmit", example: "Ik zal je een bericht sturen.", exampleTranslation: "I will send you a message." },
+            { dutch: "doorgeven", english: "pass on/communicate/relay/forward", example: "Kun je deze informatie doorgeven?", exampleTranslation: "Can you pass on this information?" },
+            { dutch: "uitnodigen", english: "invite/ask/welcome/extend an invitation", example: "Ik wil je uitnodigen voor mijn feest.", exampleTranslation: "I want to invite you to my party." },
+            { dutch: "roep", english: "call/shout/yell/cry out", example: "Ik roep je naam.", exampleTranslation: "I call your name." },
+            { dutch: "aanmelden", english: "sign up/register/enroll/check in", example: "Je moet je aanmelden voor de cursus.", exampleTranslation: "You must sign up for the course." },
+            { dutch: "begrepen", english: "understood/comprehended/grasped", example: "Ik heb het begrepen.", exampleTranslation: "I understand." },
+            { dutch: "vergadering", english: "meeting/assembly/conference/gathering", example: "De vergadering begint om 9 uur.", exampleTranslation: "The meeting starts at 9 o'clock." },
+            { dutch: "brief", english: "letter/note/message", example: "Ik heb een brief ontvangen.", exampleTranslation: "I received a letter." },
+            { dutch: "schriftelijk", english: "written/in writing", example: "Je moet schriftelijk reageren.", exampleTranslation: "You must respond in writing." },
+            { dutch: "spreekuur", english: "consultation hour/office hour", example: "De dokter heeft spreekuur in de ochtend.", exampleTranslation: "The doctor has consultation hours in the morning." },
+            { dutch: "hardop", english: "aloud/out loud", example: "Lees de tekst hardop.", exampleTranslation: "Read the text aloud." },
+            { dutch: "uitslagen", english: "results/outcomes/scores", example: "De uitslagen worden morgen bekend gemaakt.", exampleTranslation: "The results will be announced tomorrow." },
+            { dutch: "optreden", english: "perform/act/appear/intervene", example: "De band zal vanavond optreden.", exampleTranslation: "The band will perform tonight." }
+          ],
+          "Objects & Things": [
+            { dutch: "dingen", english: "things/stuff/items/objects", example: "Ik moet nog veel dingen doen.", exampleTranslation: "I still have many things to do." },
+            { dutch: "inhoud", english: "content/contents/substance/subject matter", example: "De inhoud van de doos is breekbaar.", exampleTranslation: "The contents of the box are fragile." },
+            { dutch: "rits", english: "zipper/zip/fastener", example: "De rits van mijn jas is kapot.", exampleTranslation: "The zipper of my jacket is broken." },
+            { dutch: "portemonnee", english: "wallet/purse/billfold", example: "Mijn portemonnee is gestolen.", exampleTranslation: "My wallet has been stolen." },
+            { dutch: "handdoeken", english: "towels/tea towels", example: "De handdoeken zijn in de badkamer.", exampleTranslation: "The towels are in the bathroom." },
+            { dutch: "spullen", english: "stuff/things/belongings/possessions", example: "Pak je spullen en laten we gaan.", exampleTranslation: "Pack your things and let's go." },
+            { dutch: "verrassing", english: "surprise/unexpected event/shock", example: "Ik heb een verrassing voor je.", exampleTranslation: "I have a surprise for you." },
+            { dutch: "winst", english: "profit/gain/earnings/benefit", example: "Het bedrijf maakt veel winst.", exampleTranslation: "The company makes a lot of profit." },
+            { dutch: "opleiding", english: "education/training/course/study", example: "Ik volg een opleiding tot leraar.", exampleTranslation: "I'm taking a teacher training course." },
+            { dutch: "gegevens", english: "data/information/details/facts", example: "Vul je gegevens in op het formulier.", exampleTranslation: "Fill in your details on the form." },
+            { dutch: "ervaring", english: "experience/practice/skill", example: "Ik heb veel ervaring met kinderen.", exampleTranslation: "I have a lot of experience with children." },
+            { dutch: "rijbewijs", english: "driver's license/driving license", example: "Mag ik je rijbewijs zien?", exampleTranslation: "May I see your driver's license?" },
+            { dutch: "kiespijn", english: "toothache", example: "Ik heb kiespijn.", exampleTranslation: "I have a toothache." },
+            { dutch: "bezoek", english: "visit/visitors/guests", example: "We hebben bezoek.", exampleTranslation: "We have visitors." },
+            { dutch: "kermis", english: "fair/carnival/funfair", example: "We gaan naar de kermis dit weekend.", exampleTranslation: "We are going to the fair this weekend." },
+            { dutch: "verbouwing", english: "renovation/remodeling/construction", example: "De verbouwing van ons huis duurt drie maanden.", exampleTranslation: "The renovation of our house takes three months." },
+            { dutch: "opdrachten", english: "assignments/tasks/commissions/orders", example: "Ik heb veel opdrachten voor school.", exampleTranslation: "I have many assignments for school." },
+          ],
+          "Descriptive Words": [
+            { dutch: "eigen", english: "personal/own/private/individual", example: "Dit is mijn eigen auto.", exampleTranslation: "This is my own car." },
+            { dutch: "verschillende", english: "different/various/diverse/several", example: "Er zijn verschillende opties.", exampleTranslation: "There are different options." },
+            { dutch: "dezelfde", english: "same/identical/equivalent", example: "We hebben dezelfde schoenen.", exampleTranslation: "We have the same shoes." },
+            { dutch: "hetzelfde", english: "same/equal/identical/equivalent", example: "Het is hetzelfde als gisteren.", exampleTranslation: "It is the same as yesterday." },
+            { dutch: "veilig", english: "safe/secure/protected/sheltered", example: "Je bent hier veilig.", exampleTranslation: "You are safe here." },
+            { dutch: "geldig", english: "valid/legitimate/legal/current", example: "Dit ticket is nog geldig.", exampleTranslation: "This ticket is still valid." },
+            { dutch: "nat", english: "wet/damp/moist/soaked", example: "Mijn kleren zijn nat.", exampleTranslation: "My clothes are wet." },
+            { dutch: "zeker", english: "definitely/sure/certain/assured", example: "Ik ben zeker van mijn zaak.", exampleTranslation: "I am sure of my case." },
+            { dutch: "mogelijk", english: "possible/feasible/potential/doable", example: "Is het mogelijk om te reserveren?", exampleTranslation: "Is it possible to make a reservation?" },
+            { dutch: "geschikt", english: "suitable/appropriate/fit/qualified", example: "Is deze datum geschikt voor jou?", exampleTranslation: "Is this date suitable for you?" },
+            { dutch: "algemene", english: "general/common/universal/overall", example: "Dit zijn de algemene regels.", exampleTranslation: "These are the general rules." },
+            { dutch: "allerlei", english: "all kinds of/various/diverse/miscellaneous", example: "Er zijn allerlei soorten fruit.", exampleTranslation: "There are all kinds of fruit." },
+            { dutch: "kapotte", english: "broken/damaged/faulty/defective", example: "De kapotte lamp moet vervangen worden.", exampleTranslation: "The broken lamp needs to be replaced." },
+            { dutch: "schoon", english: "clean/pure/neat/tidy", example: "Het huis is schoon.", exampleTranslation: "The house is clean." },
+            { dutch: "geweldige", english: "great/fantastic/amazing/wonderful", example: "Dat was een geweldige film.", exampleTranslation: "That was a great movie." },
+            { dutch: "echt", english: "real/genuine/authentic/truly", example: "Is dit echt goud?", exampleTranslation: "Is this real gold?" },
+            { dutch: "moeilijk", english: "difficult/hard/challenging/tough", example: "Deze oefening is moeilijk.", exampleTranslation: "This exercise is difficult." },
+            { dutch: "makkelijk", english: "easy/simple/straightforward/effortless", example: "De test was makkelijk.", exampleTranslation: "The test was easy." },
+            { dutch: "belangrijk", english: "important/significant/crucial/essential", example: "Dit is een belangrijk document.", exampleTranslation: "This is an important document." },
+            { dutch: "jammer", english: "unfortunate/pity/shame/regrettable", example: "Het is jammer dat je niet kunt komen.", exampleTranslation: "It's a pity you can't come." },
+            { dutch: "heel", english: "very/quite/whole/entire", example: "Het was heel leuk.", exampleTranslation: "It was very nice." },
+            { dutch: "vreemde", english: "strange/odd/foreign/unusual", example: "Dat is een vreemde gewoonte.", exampleTranslation: "That's a strange habit." },
+            { dutch: "duidelijke", english: "clear/obvious/distinct/explicit", example: "Geef mij een duidelijke uitleg.", exampleTranslation: "Give me a clear explanation." },
+            { dutch: "vies", english: "dirty/filthy/nasty/unclean", example: "Mijn handen zijn vies.", exampleTranslation: "My hands are dirty." },
+            { dutch: "bijzonder", english: "special/particular/unusual/extraordinary", example: "Dit is een bijzonder moment.", exampleTranslation: "This is a special moment." },
+            { dutch: "genoeg", english: "enough/sufficient/adequate", example: "Ik heb genoeg geld.", exampleTranslation: "I have enough money." },
+            { dutch: "bekend", english: "known/familiar/well-known", example: "Dit is een bekend probleem.", exampleTranslation: "This is a well-known problem." },
+            { dutch: "verplicht", english: "mandatory/compulsory/required", example: "Het dragen van een helm is verplicht.", exampleTranslation: "Wearing a helmet is mandatory." },
+            { dutch: "klaar", english: "ready/finished/done/prepared", example: "Ik ben klaar met mijn huiswerk.", exampleTranslation: "I am done with my homework." },
+            { dutch: "voldoende", english: "sufficient/adequate/enough/satisfactory", example: "Dit is voldoende informatie.", exampleTranslation: "This is sufficient information." },
+            { dutch: "enige", english: "only/sole/single/any", example: "Dit is de enige oplossing.", exampleTranslation: "This is the only solution." },
+            { dutch: "liever", english: "rather/preferably/instead", example: "Ik drink liever thee dan koffie.", exampleTranslation: "I prefer to drink tea rather than coffee." },
+            { dutch: "netjes", english: "neat/tidy/clean/proper", example: "Je kamer ziet er netjes uit.", exampleTranslation: "Your room looks neat." },
+            { dutch: "slim", english: "smart/clever/intelligent", example: "Dat is een slim idee.", exampleTranslation: "That's a smart idea." },
+          ],
+          "Activities & Sports": [
+            { dutch: "hardloopwedstrijd", english: "running race/marathon/sprint", example: "Ik doe mee aan een hardloopwedstrijd.", exampleTranslation: "I am participating in a running race." },
+            { dutch: "hardlopers", english: "runners/joggers/sprinters", example: "De hardlopers zijn al vertrokken.", exampleTranslation: "The runners have already left." },
+            { dutch: "kanovaren", english: "canoeing/kayaking/paddling", example: "We gaan kanovaren op het meer.", exampleTranslation: "We are going canoeing on the lake." },
+            { dutch: "wedstrijd", english: "competition/match/game/contest", example: "De wedstrijd begint om 15:00 uur.", exampleTranslation: "The competition starts at 3:00 PM." },
+            { dutch: "bruiloft", english: "wedding/marriage ceremony/nuptials", example: "We gaan naar een bruiloft dit weekend.", exampleTranslation: "We are going to a wedding this weekend." }
+          ],
+          "Expressions & Phrases": [
+            { dutch: "toch", english: "anyway/however/nevertheless/still", example: "Het is toch niet zo moeilijk.", exampleTranslation: "It is not that difficult anyway." },
+            { dutch: "heb er zin in", english: "feel like it/look forward to/be in the mood for", example: "Ik heb er zin in om te gaan zwemmen.", exampleTranslation: "I feel like going swimming." },
+            { dutch: "te halen", english: "to retrieve/to remove/to fetch/to get", example: "Is er nog brood te halen?", exampleTranslation: "Is there still bread to retrieve?" },
+            { dutch: "medewerking", english: "collaboration/cooperation/assistance/help", example: "Bedankt voor je medewerking.", exampleTranslation: "Thank you for your cooperation." },
+            { dutch: "last", english: "load/burden/trouble/difficulty", example: "Ik heb last van hoofdpijn.", exampleTranslation: "I have a headache." },
+            { dutch: "manier", english: "way/method/manner/approach", example: "Op deze manier is het makkelijker.", exampleTranslation: "This way is easier." },
+            { dutch: "levertijd", english: "delivery time/lead time/turnaround time", example: "De levertijd is ongeveer een week.", exampleTranslation: "The delivery time is about a week." },
+            { dutch: "hoeft", english: "need/require/have to/must", example: "Je hoeft niet te komen als je niet wilt.", exampleTranslation: "You don't have to come if you don't want to." },
+            { dutch: "dus", english: "so/thus/therefore/consequently", example: "Het regent, dus neem een paraplu mee.", exampleTranslation: "It is raining, so take an umbrella with you." },
+            { dutch: "mee", english: "along with/together/also/too", example: "Neem je jas mee.", exampleTranslation: "Take your coat with you." },
+            { dutch: "misschien", english: "maybe/perhaps/possibly/perchance", example: "Misschien kom ik morgen langs.", exampleTranslation: "Maybe I will come by tomorrow." },
+            { dutch: "verkeer", english: "traffic/transportation/circulation", example: "Er is veel verkeer op de weg.", exampleTranslation: "There is a lot of traffic on the road." },
+            { dutch: "bedrijf", english: "company/business/firm/enterprise", example: "Ik werk voor een groot bedrijf.", exampleTranslation: "I work for a large company." },
+            { dutch: "kleedkamers", english: "locker rooms/changing rooms/dressing rooms", example: "De kleedkamers zijn aan het einde van de gang.", exampleTranslation: "The locker rooms are at the end of the hall." },
+            { dutch: "vooral", english: "especially/particularly/mainly/primarily", example: "Ik hou van fruit, vooral appels.", exampleTranslation: "I like fruit, especially apples." },
+            { dutch: "bijvoorbeeld", english: "for example/for instance/such as", example: "Je kunt bijvoorbeeld een boek lezen.", exampleTranslation: "You could read a book, for example." },
+            { dutch: "geval", english: "case/instance/situation/circumstance", example: "In dat geval moet je een dokter bellen.", exampleTranslation: "In that case, you should call a doctor." },
+            { dutch: "zoveel", english: "so much/so many/that much", example: "Er zijn zoveel mensen hier.", exampleTranslation: "There are so many people here." },
+            { dutch: "terecht", english: "rightly/justly/correctly/with good reason", example: "Je bent terecht boos.", exampleTranslation: "You are rightfully angry." },
+            { dutch: "zich", english: "oneself/himself/herself/themselves", example: "Hij wast zich elke ochtend.", exampleTranslation: "He washes himself every morning." },
+            { dutch: "tegen", english: "against/versus/to/towards", example: "Ik leun tegen de muur.", exampleTranslation: "I'm leaning against the wall." },
+            { dutch: "durf", english: "dare/courage/guts/nerve", example: "Ik durf niet alleen naar huis te gaan.", exampleTranslation: "I don't dare to go home alone." },
+            { dutch: "eigenlijk", english: "actually/really/in fact/truly", example: "Wat wil je eigenlijk?", exampleTranslation: "What do you actually want?" },
+            { dutch: "door", english: "through/by/because of/via", example: "Ik loop door het park.", exampleTranslation: "I walk through the park." },
+            { dutch: "gewoon", english: "just/simply/ordinary/normal", example: "Het is gewoon niet eerlijk.", exampleTranslation: "It's just not fair." },
+            { dutch: "nodig", english: "necessary/needed/required", example: "Ik heb je hulp nodig.", exampleTranslation: "I need your help." },
+            { dutch: "nogmaals", english: "again/once more/once again", example: "Kun je dat nogmaals uitleggen?", exampleTranslation: "Can you explain that again?" },
+            { dutch: "noodgeval", english: "emergency/urgent case", example: "Bel alleen in een noodgeval.", exampleTranslation: "Only call in an emergency." },
+            { dutch: "liefst", english: "preferably/rather/most of all", example: "Ik drink liefst koffie zonder suiker.", exampleTranslation: "I prefer to drink coffee without sugar." },
+            { dutch: "druk", english: "busy/pressure/crowded/hectic", example: "Ik heb het erg druk vandaag.", exampleTranslation: "I'm very busy today." },
+            { dutch: "namelijk", english: "namely/that is/because/for", example: "Ik kan niet komen, ik ben namelijk ziek.", exampleTranslation: "I can't come because I'm sick." },
+            { dutch: "afscheid", english: "farewell/goodbye/departure", example: "We namen afscheid van elkaar.", exampleTranslation: "We said goodbye to each other." },
+            { dutch: "voordeel", english: "advantage/benefit/profit", example: "Het voordeel van vroeg opstaan is dat je meer tijd hebt.", exampleTranslation: "The advantage of getting up early is that you have more time." },
+            { dutch: "reden", english: "reason/cause/motive/ground", example: "Wat is de reden van je bezoek?", exampleTranslation: "What is the reason for your visit?" },
+            { dutch: "trouwens", english: "by the way/incidentally/moreover", example: "Trouwens, heb je het nieuws gehoord?", exampleTranslation: "By the way, have you heard the news?" },
+            { dutch: "herkansing", english: "second chance/retry/resit", example: "Je krijgt een herkansing voor het examen.", exampleTranslation: "You get a second chance for the exam." },
+          ],
+          "Places & Institutions": [
+            { dutch: "basisschool", english: "primary school/elementary school", example: "Mijn zoon gaat naar de basisschool.", exampleTranslation: "My son goes to primary school." },
+            { dutch: "bijeenkomsten", english: "meetings/gatherings/assemblies/conferences", example: "Er zijn wekelijkse bijeenkomsten.", exampleTranslation: "There are weekly meetings." },
+            { dutch: "ontvangst", english: "reception/receipt/welcome", example: "De ontvangst was hartelijk.", exampleTranslation: "The reception was warm." },
+            { dutch: "dienst", english: "service/duty/department/office", example: "Ik ben morgen niet van dienst.", exampleTranslation: "I'm not on duty tomorrow." },
+            { dutch: "bereikbaar", english: "accessible/reachable/available", example: "Het kantoor is goed bereikbaar met de bus.", exampleTranslation: "The office is easily accessible by bus." }
+          ],
+          "Events & Situations": [
+            { dutch: "ongelukken", english: "accidents/mishaps/crashes", example: "Er gebeuren veel ongelukken op deze weg.", exampleTranslation: "Many accidents happen on this road." },
+            { dutch: "gebruikte", english: "used/second-hand/pre-owned", example: "Ik koop vaak gebruikte boeken.", exampleTranslation: "I often buy used books." }
+          ],
+          "Abstract Concepts": [
+            { dutch: "geschiedenis", english: "history/story/past", example: "Ik ben geïnteresseerd in geschiedenis.", exampleTranslation: "I am interested in history." },
+          ]
+        };
+
+        // Remove duplicate words from vocabulary
+        function removeDuplicateWords() {
+            const seenWords = new Set();
+            const duplicates = [];
+            
+            // First pass: identify duplicates
+            for (const category in vocabulary) {
+                for (let i = 0; i < vocabulary[category].length; i++) {
+                    const word = vocabulary[category][i];
+                    if (seenWords.has(word.dutch)) {
+                        duplicates.push(word.dutch);
+                    } else {
+                        seenWords.add(word.dutch);
+                    }
+                }
+            }
+            
+            // Second pass: remove duplicates
+            for (const category in vocabulary) {
+                vocabulary[category] = vocabulary[category].filter(word => {
+                    // Keep the word if it's not a duplicate or if it's the first occurrence
+                    if (!duplicates.includes(word.dutch)) {
+                        return true;
+                    }
+                    
+                    // If it's a duplicate, only keep it in the first category it appears in
+                    if (seenWords.has(word.dutch)) {
+                        seenWords.delete(word.dutch); // Remove so we only keep the first occurrence
+                        return true;
+                    }
+                    
+                    return false;
+                });
+            }
+            
+            console.log(`Removed ${duplicates.length} duplicate words from vocabulary`);
+            return duplicates;
+        }
+
+        // Clean up existing SRS data
+        function cleanupSRSData() {
+            if (!srsWords || srsWords.length === 0) return;
+            
+            const seenWords = new Set();
+            const originalLength = srsWords.length;
+            
+            // Keep only the first occurrence of each word
+            srsWords = srsWords.filter(word => {
+                if (seenWords.has(word.dutch)) {
+                    return false;
+                }
+                seenWords.add(word.dutch);
+                return true;
+            });
+            
+            console.log(`Cleaned up SRS data: removed ${originalLength - srsWords.length} duplicates`);
+            saveSRSData();
+        }
+
+        // Function to synchronize vocabulary with SRS data
+        function syncVocabularyWithSRS() {
+            // Create a set of all Dutch words currently in SRS
+            const srsWordSet = new Set(srsWords.map(word => word.dutch));
+            let newWordsAdded = 0;
+            
+            // Check each word in vocabulary and add missing ones to SRS
+            for (const category in vocabulary) {
+                vocabulary[category].forEach(word => {
+                    if (!srsWordSet.has(word.dutch)) {
+                        // Add new word to SRS with immediate review date
+                        srsWords.push({
+                            dutch: word.dutch,
+                            english: word.english,
+                            example: word.example,
+                            exampleTranslation: word.exampleTranslation,
+                            category: category,
+                            interval: 0,
+                            repetitions: 0,
+                            easeFactor: 2.5,
+                            nextReview: new Date(), // Set to now for immediate review
+                            lastReviewed: null
+                        });
+                        newWordsAdded++;
+                    }
+                });
+            }
+            
+            if (newWordsAdded > 0) {
+                console.log(`Added ${newWordsAdded} new words to SRS data`);
+                saveSRSData();
+                // Update the SRS word list to include new words
+                if (srsEnabled) {
+                    updateSRSWordList();
+                }
+            }
+            
+            return newWordsAdded;
+        }
+
+        let allWords = [];
+        let currentCategory = 'all';
+        let currentWord = null;
+        let learnedWords = [];
+        let gameMode = 'test'; // 'practice' or 'test'
+        let stats = {
+            correct: 0,
+            incorrect: 0,
+            learned: 0
+        };
+
+        // SRS variables
+        let srsEnabled = false;
+        let srsWords = [];
+
+        // Initialize speech synthesis
+        const synth = window.speechSynthesis;
+        let dutchVoice = null;
+
+        // Get Dutch voice
+        function loadVoices() {
+            const voices = synth.getVoices();
+            dutchVoice = voices.find(voice => voice.lang.includes('nl')) || voices[0];
+        }
+
+        // Load voices when they're ready
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        loadVoices();
+
+        // Speak function
+        function speak(text) {
+            if (synth.speaking) {
+                synth.cancel();
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = dutchVoice;
+            utterance.lang = 'nl-NL';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+
+            const speakerButton = document.getElementById('speakButton');
+            speakerButton.classList.add('speaking');
+
+            utterance.onend = () => {
+                speakerButton.classList.remove('speaking');
+            };
+
+            synth.speak(utterance);
+        }
+
+        // Levenshtein distance function
+        function levenshtein(a, b) {
+            const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+
+            for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+            for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+            for (let i = 1; i <= a.length; i++) {
+                for (let j = 1; j <= b.length; j++) {
+                    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j] + 1, // Deletion
+                        matrix[i][j - 1] + 1, // Insertion
+                        matrix[i - 1][j - 1] + cost // Substitution
+                    );
+                }
+            }
+
+            return matrix[a.length][b.length];
+        }
+
+        // SRS Functions
+        function initializeSRS() {
+            // Try to load SRS data from localStorage
+            const savedSRSData = localStorage.getItem('dutchLearningGameSRS');
+            
+            if (savedSRSData) {
+                try {
+                    const parsedData = JSON.parse(savedSRSData);
+                    
+                    // Convert date strings back to Date objects
+                    parsedData.words.forEach(word => {
+                        if (word.nextReview) {
+                            word.nextReview = new Date(word.nextReview);
+                        }
+                        if (word.lastReviewed) {
+                            word.lastReviewed = new Date(word.lastReviewed);
+                        }
+                    });
+                    
+                    srsWords = parsedData.words;
+                    
+                    // Update stats if available
+                    if (parsedData.stats) {
+                        stats = parsedData.stats;
+                        document.getElementById('correct').textContent = stats.correct;
+                        document.getElementById('incorrect').textContent = stats.incorrect;
+                        document.getElementById('learned').textContent = stats.learned;
+                    }
+                    
+                    // Update learned words if available
+                    if (parsedData.learnedWords) {
+                        learnedWords = parsedData.learnedWords;
+                    }
+                    
+                    console.log('SRS data loaded from localStorage');
+                    
+                    // Check for duplicate words
+                    checkForDuplicateWords();
+                } catch (error) {
+                    console.error('Error parsing SRS data:', error);
+                    initializeNewSRSData();
+                }
+            } else {
+                initializeNewSRSData();
+            }
+            
+            // Add SRS difficulty buttons
+            const srsControls = document.createElement('div');
+            srsControls.id = 'srsControls';
+            srsControls.className = 'controls hidden';
+            srsControls.innerHTML = `
+                <button class="difficulty easy" onclick="rateDifficulty(5)">Easy</button>
+                <button class="difficulty good" onclick="rateDifficulty(3)">Good</button>
+                <button class="difficulty hard" onclick="rateDifficulty(1)">Hard</button>
+            `;
+            document.querySelector('.container').appendChild(srsControls);
+            
+            // Add SRS info display
+            const srsInfo = document.createElement('div');
+            srsInfo.id = 'srsInfo';
+            srsInfo.className = 'srs-info hidden';
+            srsInfo.innerHTML = `
+                <div>Due for review: <span id="dueCount">0</span></div>
+                <div>Next review: <span id="nextReview">-</span></div>
+                <div style="margin-top: 10px;">
+                    <button id="practiceNowBtn" style="background-color: #9C27B0; color: white; font-size: 14px; padding: 5px 10px;">Practice Upcoming Words</button>
+                </div>
+            `;
+            document.querySelector('.stats').appendChild(srsInfo);
+            
+            // Add CSS for SRS elements
+            const style = document.createElement('style');
+            style.textContent = `
+                .difficulty.easy { background-color: #4CAF50; color: white; }
+                .difficulty.good { background-color: #2196F3; color: white; }
+                .difficulty.hard { background-color: #FF9800; color: white; }
+                .srs-info { margin-top: 10px; font-size: 14px; }
+            `;
+            document.head.appendChild(style);
+            
+            // Add event listener for Practice Now button
+            document.getElementById('practiceNowBtn').addEventListener('click', function() {
+                practiceUpcomingWords();
+            });
+            
+            updateSRSInfo();
+        }
+        
+        function initializeNewSRSData() {
+            // Initialize SRS data for all vocabulary words
+            srsWords = [];
+            
+            // Track words we've already added to avoid duplicates
+            const addedWords = new Set();
+            
+            for (const category in vocabulary) {
+                vocabulary[category].forEach(word => {
+                    // Skip if we've already added this word
+                    if (addedWords.has(word.dutch)) {
+                        console.log(`Skipping duplicate word: ${word.dutch} in category ${category}`);
+                        return;
+                    }
+                    
+                    // Add to our tracking set
+                    addedWords.add(word.dutch);
+                    
+                    // Add to SRS data
+                    srsWords.push({
+                        dutch: word.dutch,
+                        english: word.english,
+                        example: word.example,
+                        exampleTranslation: word.exampleTranslation,
+                        category: category,
+                        interval: 0,
+                        repetitions: 0,
+                        easeFactor: 2.5,
+                        nextReview: new Date(),
+                        lastReviewed: null
+                    });
+                });
+            }
+            
+            console.log(`Initialized SRS with ${srsWords.length} unique words (skipped ${addedWords.size - srsWords.length} duplicates)`);
+            saveSRSData();
+            console.log('New SRS data initialized');
+        }
+        
+        function saveSRSData() {
+            const srsData = {
+                words: srsWords,
+                stats: stats,
+                learnedWords: learnedWords,
+                lastSaved: new Date()
+            };
+            
+            localStorage.setItem('dutchLearningGameSRS', JSON.stringify(srsData));
+        }
+        
+        function setSRSMode() {
+            srsEnabled = true;
+            gameMode = 'srs';
+            
+            document.getElementById('practiceControls').classList.add('hidden');
+            document.getElementById('testControls').classList.remove('hidden');
+            document.getElementById('answerForm').classList.remove('hidden');
+            document.getElementById('srsControls').classList.add('hidden');
+            document.getElementById('srsInfo').classList.remove('hidden');
+            
+            // Update the word list to show due words
+            updateSRSWordList();
+            updateCard();
+        }
+        
+        function updateSRSWordList() {
+            const now = new Date();
+            
+            // If we're in practice upcoming mode, include all words
+            if (practiceUpcomingMode) {
+                allWords = srsWords.filter(word => word.nextReview > now)
+                    .sort((a, b) => a.nextReview - b.nextReview);
+                
+                // If no upcoming words, show a message
+                if (allWords.length === 0) {
+                    practiceUpcomingMode = false;
+                    document.getElementById('practiceNowBtn').textContent = 'Practice Upcoming Words';
+                    // Revert to normal SRS mode
+                    allWords = srsWords.filter(word => word.nextReview <= now)
+                        .sort((a, b) => a.nextReview - b.nextReview);
+                    alert('No upcoming words to practice! All words are either due now or you have learned all words.');
+                }
+            } else {
+                // Normal SRS mode - only include words that are due for review
+                allWords = srsWords.filter(word => word.nextReview <= now)
+                    .sort((a, b) => a.nextReview - b.nextReview);
+            }
+            
+            updateSRSInfo();
+        }
+        
+        function updateSRSInfo() {
+            if (!srsEnabled) return;
+            
+            const now = new Date();
+            const dueWords = srsWords.filter(word => word.nextReview <= now);
+            document.getElementById('dueCount').textContent = dueWords.length;
+            
+            // Find the next word due for review
+            const upcomingWords = srsWords.filter(word => word.nextReview > now)
+                .sort((a, b) => a.nextReview - b.nextReview);
+            
+            if (upcomingWords.length > 0) {
+                const nextDate = upcomingWords[0].nextReview;
+                const timeUntil = getTimeUntil(nextDate);
+                document.getElementById('nextReview').textContent = timeUntil;
+                
+                // Update the practice now button text to show count of upcoming words
+                document.getElementById('practiceNowBtn').textContent = 
+                    practiceUpcomingMode ? 'Return to Due Words' : `Practice Upcoming Words (${upcomingWords.length})`;
+            } else {
+                document.getElementById('nextReview').textContent = 'No upcoming reviews';
+                document.getElementById('practiceNowBtn').style.display = 'none';
+            }
+            
+            // Show or hide the practice now button based on whether there are upcoming words
+            document.getElementById('practiceNowBtn').style.display = 
+                upcomingWords.length > 0 ? 'inline-block' : 'none';
+        }
+        
+        function getTimeUntil(date) {
+            const now = new Date();
+            const diffMs = date - now;
+            
+            if (diffMs < 0) return 'Now';
+            
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (diffDays > 0) {
+                return `${diffDays} day${diffDays > 1 ? 's' : ''} ${diffHours} hr`;
+            } else if (diffHours > 0) {
+                return `${diffHours} hour${diffHours > 1 ? 's' : ''} ${diffMinutes} min`;
+            } else {
+                return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
+            }
+        }
+        
+        function rateDifficulty(quality) {
+            if (!currentWord || !srsEnabled) return;
+            
+            // Find the word in the SRS list
+            const wordIndex = srsWords.findIndex(w => w.dutch === currentWord.dutch);
+            if (wordIndex === -1) return;
+            
+            const word = srsWords[wordIndex];
+            
+            // Apply the SM-2 algorithm
+            if (quality < 3) {
+                // If rating is less than 3, reset repetitions
+                word.repetitions = 0;
+                word.interval = 1;
+            } else {
+                // Calculate new interval based on repetitions
+                if (word.repetitions === 0) {
+                    word.interval = 1; // 1 day
+                } else if (word.repetitions === 1) {
+                    word.interval = 6; // 6 days
+                } else {
+                    // Increase interval by ease factor
+                    word.interval = Math.round(word.interval * word.easeFactor);
+                }
+                word.repetitions += 1;
+            }
+            
+            // Update ease factor
+            word.easeFactor = Math.max(1.3, word.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+            
+            // Set next review date
+            const nextReview = new Date();
+            nextReview.setDate(nextReview.getDate() + word.interval);
+            word.nextReview = nextReview;
+            word.lastReviewed = new Date();
+            
+            // Update stats
+            if (quality >= 3) {
+                stats.correct++;
+                document.getElementById('correct').textContent = stats.correct;
+            } else {
+                stats.incorrect++;
+                document.getElementById('incorrect').textContent = stats.incorrect;
+            }
+            
+            // Save SRS data
+            saveSRSData();
+            
+            // Show feedback
+            const feedback = document.getElementById('feedback');
+            feedback.classList.remove('hidden');
+            
+            if (quality >= 4) {
+                feedback.textContent = `Great! Next review in ${word.interval} day${word.interval !== 1 ? 's' : ''}.`;
+                feedback.className = "feedback correct";
+            } else if (quality >= 3) {
+                feedback.textContent = `Good! Next review in ${word.interval} day${word.interval !== 1 ? 's' : ''}.`;
+                feedback.className = "feedback correct";
+            } else {
+                feedback.textContent = "You'll see this word again soon.";
+                feedback.className = "feedback incorrect";
+            }
+            
+            // Show next word after a short delay
+            setTimeout(() => {
+                updateSRSWordList();
+                updateCard();
+            }, 1500);
+        }
+
+        // Initialize the game
+        function initializeGame() {
+            // First, remove duplicates from vocabulary
+            const removedDuplicates = removeDuplicateWords();
+            console.log("Removed duplicate words:", removedDuplicates);
+            
+            // Populate category selector
+            const categorySelect = document.getElementById('categorySelect');
+            for (const category in vocabulary) {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            }
+
+            // Add reset button
+            const resetButton = document.createElement('button');
+            resetButton.textContent = 'Reset Progress';
+            resetButton.style.backgroundColor = '#f44336';
+            resetButton.style.color = 'white';
+            resetButton.style.fontSize = '12px';
+            resetButton.style.padding = '5px 10px';
+            resetButton.style.marginTop = '20px';
+            resetButton.style.display = 'block';
+            resetButton.style.marginLeft = 'auto';
+            resetButton.style.marginRight = '0';
+            resetButton.style.borderRadius = '4px';
+            resetButton.addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                    localStorage.removeItem('dutchLearningGameSRS');
+                    alert('Progress reset. Reloading page...');
+                    location.reload();
+                }
+            });
+            document.querySelector('.container').appendChild(resetButton);
+
+            // Initialize word list and first card
+            updateWordList();
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('flashcard').classList.remove('hidden');
+            
+            // Initialize SRS
+            initializeSRS();
+            
+            // Clean up any duplicate words in SRS data
+            cleanupSRSData();
+            
+            // Synchronize vocabulary with SRS data to add any new words
+            const newWordsAdded = syncVocabularyWithSRS();
+            if (newWordsAdded > 0) {
+                console.log(`Added ${newWordsAdded} new words for immediate review`);
+            }
+            
+            // Set Smart Review Mode as default
+            setSRSMode();
+            
+            // Initialize popup guide
+            initializeGuide();
+            
+            updateCard();
+        }
+
+        // Initialize the guide popup
+        function initializeGuide() {
+            const helpIcon = document.getElementById('helpIcon');
+            const guidePopup = document.getElementById('guidePopup');
+            const closePopup = document.getElementById('closePopup');
+            const startLearning = document.getElementById('startLearning');
+            
+            // Show popup when help icon is clicked
+            helpIcon.addEventListener('click', function() {
+                guidePopup.classList.add('active');
+            });
+            
+            // Close popup when X is clicked
+            closePopup.addEventListener('click', function() {
+                guidePopup.classList.remove('active');
+            });
+            
+            // Close popup when Start Learning button is clicked
+            startLearning.addEventListener('click', function() {
+                guidePopup.classList.remove('active');
+            });
+            
+            // Close popup when clicking outside content
+            guidePopup.addEventListener('click', function(e) {
+                if (e.target === guidePopup) {
+                    guidePopup.classList.remove('active');
+                }
+            });
+            
+            // Show popup on first visit
+            const hasSeenGuide = localStorage.getItem('hasSeenGuide');
+            if (!hasSeenGuide) {
+                guidePopup.classList.add('active');
+                localStorage.setItem('hasSeenGuide', 'true');
+            }
+        }
+
+        // Set game mode (practice, test, or srs)
+        function setGameMode(mode) {
+            gameMode = mode;
+            srsEnabled = (mode === 'srs');
+            
+            // Update the mode dropdown
+            document.getElementById('modeSelect').value = mode;
+            
+            if (mode === 'practice') {
+                document.getElementById('practiceControls').classList.remove('hidden');
+                document.getElementById('testControls').classList.add('hidden');
+                document.getElementById('answerForm').classList.add('hidden');
+                document.getElementById('srsControls').classList.add('hidden');
+                document.getElementById('srsInfo').classList.add('hidden');
+            } else if (mode === 'test') {
+                document.getElementById('practiceControls').classList.add('hidden');
+                document.getElementById('testControls').classList.remove('hidden');
+                document.getElementById('answerForm').classList.remove('hidden');
+                document.getElementById('srsControls').classList.add('hidden');
+                document.getElementById('srsInfo').classList.add('hidden');
+            } else if (mode === 'srs') {
+                document.getElementById('practiceControls').classList.add('hidden');
+                document.getElementById('testControls').classList.remove('hidden');
+                document.getElementById('answerForm').classList.remove('hidden');
+                document.getElementById('srsControls').classList.add('hidden');
+                document.getElementById('srsInfo').classList.remove('hidden');
+                
+                // Update the word list to show due words
+                updateSRSWordList();
+            }
+            
+            // Clear any feedback
+            const feedback = document.getElementById('feedback');
+            feedback.classList.add('hidden');
+            feedback.textContent = '';
+            
+            // Update word list for the selected mode
+            updateWordList();
+        }
+
+        // Update the word list based on selected category
+        function updateWordList() {
+            if (srsEnabled) {
+                updateSRSWordList();
+                return;
+            }
+            
+            if (currentCategory === 'all') {
+                allWords = [];
+                for (const category in vocabulary) {
+                    allWords = allWords.concat(vocabulary[category]);
+                }
+            } else {
+                allWords = vocabulary[currentCategory] || [];
+            }
+            
+            // Filter out learned words
+            allWords = allWords.filter(word => !learnedWords.includes(word.dutch));
+        }
+
+        function getRandomWord() {
+            if (allWords.length === 0) return null;
+            return allWords[Math.floor(Math.random() * allWords.length)];
+        }
+
+        function updateCard() {
+            currentWord = getRandomWord();
+            if (!currentWord) {
+                document.getElementById('word').textContent = srsEnabled ? 
+                    "No words due for review" : 
+                    "No words available in this category";
+                document.getElementById('example').textContent = "";
+                return;
+            }
+            
+            document.getElementById('word').textContent = currentWord.dutch;
+            document.getElementById('example').textContent = currentWord.example;
+            document.getElementById('example').classList.add('hidden');
+            
+            // Clear answer input and feedback
+            document.getElementById('answerInput').value = '';
+            const feedback = document.getElementById('feedback');
+            feedback.classList.add('hidden');
+            feedback.textContent = '';
+            
+            // Show example after 2 seconds
+            setTimeout(() => {
+                document.getElementById('example').classList.remove('hidden');
+            }, 2000);
+        }
+
+        function checkAnswer(isCorrect) {
+            if (isCorrect) {
+                stats.correct++;
+                document.getElementById('correct').textContent = stats.correct;
+            } else {
+                stats.incorrect++;
+                document.getElementById('incorrect').textContent = stats.incorrect;
+            }
+            
+            // Save stats
+            saveSRSData();
+            
+            updateCard();
+        }
+
+        function skipWord() {
+            updateCard();
+        }
+
+        function checkUserAnswer() {
+            const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
+            const correctAnswer = currentWord.english.toLowerCase();
+            const feedback = document.getElementById('feedback');
+            
+            // Check if the answer is correct (allowing for multiple correct answers separated by /)
+            const correctAnswers = correctAnswer.split('/').map(ans => ans.trim());
+            const isCorrect = correctAnswers.some(ans => levenshtein(userAnswer, ans) <= 2); // Allow up to 2 typos
+            
+            feedback.classList.remove('hidden');
+            
+            // Flip the card to show the English translation
+            const wordElement = document.getElementById('word');
+            const exampleElement = document.getElementById('example');
+            
+            if (wordElement.textContent === currentWord.dutch) {
+                wordElement.textContent = currentWord.english;
+                exampleElement.textContent = `Example: ${currentWord.exampleTranslation}`;
+            }
+            
+            if (isCorrect) {
+                feedback.textContent = "Correct! Well done!";
+                feedback.className = "feedback correct";
+                stats.correct++;
+                stats.learned++;
+                document.getElementById('correct').textContent = stats.correct;
+                document.getElementById('learned').textContent = stats.learned;
+                
+                // Store current word to avoid reference issues
+                const processedWord = {...currentWord};
+                
+                // Add to learned words if not in SRS mode
+                if (!srsEnabled) {
+                    learnedWords.push(processedWord.dutch);
+                } else {
+                    // In SRS mode, update the word's SRS data with a "good" rating (4)
+                    updateSRSData(processedWord, 4);
+                    feedback.textContent = `Correct! Next review in ${getSRSInterval(processedWord)} day(s).`;
+                }
+                
+                // Save progress
+                saveSRSData();
+                
+                // Add countdown bar for visual feedback
+                const countdownBar = document.createElement('div');
+                countdownBar.className = 'countdown-bar';
+                feedback.appendChild(countdownBar);
+                
+                // Show next word after a short delay
+                setTimeout(() => {
+                    if (srsEnabled) {
+                        updateSRSWordList();
+                    } else {
+                        updateWordList();
+                    }
+                    updateCard();
+                }, 2500); // Increased delay to give more time to see the translation
+            } else {
+                feedback.textContent = `Incorrect. The correct answer is: ${currentWord.english}.`;
+                feedback.className = "feedback incorrect";
+                stats.incorrect++;
+                document.getElementById('incorrect').textContent = stats.incorrect;
+                
+                // Store current word to avoid reference issues
+                const processedWord = {...currentWord};
+                
+                // In SRS mode, update the word's SRS data with a "hard" rating (1)
+                if (srsEnabled) {
+                    updateSRSData(processedWord, 1);
+                    feedback.textContent = `Incorrect. The correct answer is: ${currentWord.english}. You'll see this word again soon.`;
+                }
+                
+                // Save progress
+                saveSRSData();
+                
+                // Add Next Word button instead of auto-progression
+                const nextWordBtn = document.createElement('button');
+                nextWordBtn.textContent = "Next Word";
+                nextWordBtn.className = "next";
+                nextWordBtn.style.marginTop = "10px";
+                nextWordBtn.style.display = "block";
+                nextWordBtn.style.marginLeft = "auto";
+                nextWordBtn.style.marginRight = "auto";
+                nextWordBtn.addEventListener('click', function() {
+                    if (srsEnabled) {
+                        updateSRSWordList();
+                    } else {
+                        updateWordList();
+                    }
+                    updateCard();
+                });
+                feedback.appendChild(nextWordBtn);
+            }
+        }
+        
+        // New function to update SRS data based on answer correctness
+        function updateSRSData(word, quality) {
+            // Find all instances of the word in the SRS list
+            const wordIndices = [];
+            srsWords.forEach((w, index) => {
+                if (w.dutch === word.dutch) {
+                    wordIndices.push(index);
+                }
+            });
+            
+            if (wordIndices.length === 0) return;
+            
+            // Update all instances of the word
+            wordIndices.forEach(wordIndex => {
+                const srsWord = srsWords[wordIndex];
+                
+                // Apply the SM-2 algorithm
+                if (quality < 3) {
+                    // If rating is less than 3, reset repetitions
+                    srsWord.repetitions = 0;
+                    srsWord.interval = 1;
+                } else {
+                    // Calculate new interval based on repetitions
+                    if (srsWord.repetitions === 0) {
+                        srsWord.interval = 1; // 1 day
+                    } else if (srsWord.repetitions === 1) {
+                        srsWord.interval = 6; // 6 days
+                    } else {
+                        // Increase interval by ease factor
+                        srsWord.interval = Math.round(srsWord.interval * srsWord.easeFactor);
+                    }
+                    srsWord.repetitions += 1;
+                }
+                
+                // Update ease factor
+                srsWord.easeFactor = Math.max(1.3, srsWord.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+                
+                // Set next review date
+                const nextReview = new Date();
+                nextReview.setDate(nextReview.getDate() + srsWord.interval);
+                srsWord.nextReview = nextReview;
+                srsWord.lastReviewed = new Date();
+            });
+            
+            // Force immediate update of the SRS word list
+            updateSRSWordList();
+            
+            // Log for debugging
+            console.log(`Updated ${wordIndices.length} instances of word "${word.dutch}"`);
+        }
+        
+        // Helper function to get the interval for a word
+        function getSRSInterval(word) {
+            const wordIndex = srsWords.findIndex(w => w.dutch === word.dutch);
+            if (wordIndex === -1) return 1;
+            
+            return srsWords[wordIndex].interval;
+        }
+
+        // Add click to flip functionality
+        document.getElementById('flashcard').addEventListener('click', function(event) {
+            // Don't flip if clicking the speaker button
+            if (event.target.id === 'speakButton') {
+                return;
+            }
+
+            if (!currentWord) return;
+
+            const wordElement = document.getElementById('word');
+            const exampleElement = document.getElementById('example');
+
+            if (wordElement.textContent === currentWord.dutch) {
+                wordElement.textContent = currentWord.english;
+                exampleElement.textContent = `Example: ${currentWord.exampleTranslation}`;
+            } else {
+                wordElement.textContent = currentWord.dutch;
+                exampleElement.textContent = currentWord.example;
+            }
+        });
+
+        // Add speak functionality
+        document.getElementById('speakButton').addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent card flip
+            if (currentWord) {
+                speak(currentWord.dutch);
+            }
+        });
+
+        // Handle category change
+        document.getElementById('categorySelect').addEventListener('change', function(event) {
+            currentCategory = event.target.value;
+            updateWordList();
+            updateCard();
+        });
+
+
+        // Handle answer submission
+        document.getElementById('submitAnswer').addEventListener('click', function() {
+            checkUserAnswer();
+        });
+
+        // Allow pressing Enter to submit answer
+        document.getElementById('answerInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                checkUserAnswer();
+            }
+        });
+
+        // Debug function to check for duplicate words
+        function checkForDuplicateWords() {
+            const wordCounts = {};
+            const duplicates = [];
+            
+            srsWords.forEach(word => {
+                if (!wordCounts[word.dutch]) {
+                    wordCounts[word.dutch] = 1;
+                } else {
+                    wordCounts[word.dutch]++;
+                    if (wordCounts[word.dutch] === 2) {
+                        duplicates.push(word.dutch);
+                    }
+                }
+            });
+            
+            if (duplicates.length > 0) {
+                console.warn('Duplicate words found in SRS data:', duplicates);
+            }
+        }
+
+        // Add a flag to track if we're practicing upcoming words
+        let practiceUpcomingMode = false;
+        
+        // Function to toggle practicing upcoming words
+        function practiceUpcomingWords() {
+            if (!srsEnabled) {
+                setSRSMode(); // Enable SRS mode first if it's not already enabled
+            }
+            
+            practiceUpcomingMode = !practiceUpcomingMode;
+            
+            const practiceNowBtn = document.getElementById('practiceNowBtn');
+            if (practiceUpcomingMode) {
+                practiceNowBtn.textContent = 'Return to Due Words';
+                practiceNowBtn.style.backgroundColor = '#FF5722';
+            } else {
+                practiceNowBtn.textContent = 'Practice Upcoming Words';
+                practiceNowBtn.style.backgroundColor = '#9C27B0';
+            }
+            
+            // Update the word list and card
+            updateSRSWordList();
+            updateCard();
+        }
+
+        // Function to mark a word for review soon and show the answer
+        function keepLearningWord() {
+            if (!currentWord) return;
+            
+            // Flip the card to show the answer
+            const wordElement = document.getElementById('word');
+            const exampleElement = document.getElementById('example');
+            
+            if (wordElement.textContent === currentWord.dutch) {
+                wordElement.textContent = currentWord.english;
+                exampleElement.textContent = `Example: ${currentWord.exampleTranslation}`;
+            }
+            
+            // Show feedback
+            const feedback = document.getElementById('feedback');
+            feedback.classList.remove('hidden');
+            feedback.textContent = "You'll see this word again soon.";
+            feedback.className = "feedback incorrect";
+            
+            // Add countdown bar for visual feedback
+            const countdownBar = document.createElement('div');
+            countdownBar.className = 'countdown-bar';
+            feedback.appendChild(countdownBar);
+            
+            // If in SRS mode, mark the word as difficult
+            if (srsEnabled) {
+                // Store current word to avoid reference issues
+                const processedWord = {...currentWord};
+                updateSRSData(processedWord, 1); // Use rating 1 (hard)
+            } else {
+                // In regular mode, increment incorrect count
+                stats.incorrect++;
+                document.getElementById('incorrect').textContent = stats.incorrect;
+                saveSRSData();
+            }
+            
+            // Move to next word after a delay
+            setTimeout(() => {
+                if (srsEnabled) {
+                    updateSRSWordList();
+                }
+                updateCard();
+            }, 2500);
+        }
+
+        // Handle mode selection from dropdown
+        document.getElementById('modeSelect').addEventListener('change', function(event) {
+            setGameMode(event.target.value);
+            updateCard();
+        });
+
+        // Initialize the game when page loads
+        window.addEventListener('DOMContentLoaded', initializeGame);
+    </script>
+</body>
+</html> 
